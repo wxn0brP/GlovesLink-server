@@ -28,7 +28,7 @@ npm i @wxn0brp/gloves-link-server @wxn0brp/falcon-frame
 ## Usage
 
 ```typescript
-import { GlovesLinkServer } from '@wxn0brp/gloves-link/server';
+import { GlovesLinkServer } from '@wxn0brp/gloves-link-server';
 import { FalconFrame } from '@wxn0brp/falcon-frame';
 
 const app = new FalconFrame();
