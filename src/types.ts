@@ -1,4 +1,5 @@
 import http from "http";
+import Stream from "stream";
 
 export interface Server_Opts {
     server: http.Server;
@@ -21,6 +22,9 @@ export interface Server_Auth_Opts {
     headers: http.IncomingHttpHeaders;
     url: URL;
     token?: string;
+    request: http.IncomingMessage;
+    socket: Stream.Duplex;
+    head: Buffer<ArrayBufferLike>;
 }
 
-export type AuthFn = (data: Server_Auth_Opts) => boolean | Promise<boolean>;
+export type AuthFn = (data: Server_Auth_Opts) => (Promise<object | boolean> | object | boolean);

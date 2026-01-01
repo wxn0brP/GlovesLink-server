@@ -5,6 +5,7 @@ import { joinSocketToRoom, leaveAllSocketFromRoom, leaveSocketFromRoom } from ".
 
 export class GLSocket {
     public id: string;
+    public user: Record<string, any> = {};
     ackIdCounter = 1;
     ackCallbacks: Map<number, Function> = new Map();
     logs = false;

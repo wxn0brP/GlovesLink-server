@@ -37,9 +37,17 @@ export class GlovesLinkServer {
                 const url = new URL(request.url!, `http://${request.headers.host}`);
                 const token = url.searchParams.get("token");
                 socketSelfId = url.searchParams.get("id");
-                const isAuthenticated = await this.opts.authFn({ headers, url, token });
 
-                if (!isAuthenticated) {
+                const authResult = await this.opts.authFn({
+                    headers,
+                    url,
+                    token,
+                    request,
+                    socket,
+                    head
+                });
+
+                if (!authResult) {
                     this.saveSocketStatus(socketSelfId, 401);
                     socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
                     socket.destroy();
@@ -49,6 +57,8 @@ export class GlovesLinkServer {
                 this.wss.handleUpgrade(request, socket, head, (ws) => {
                     const glSocket = new GLSocket(ws, this);
                     glSocket.logs = this.logs;
+
+                    if (typeof authResult === "object" && authResult !== null) glSocket.user = authResult;
 
                     this.globalRoom.join(glSocket);
                     this.onConnectEvent(glSocket);
