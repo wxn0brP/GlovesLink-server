@@ -109,12 +109,10 @@ export class GlovesLinkServer {
         return this.rooms.get(name) || this.rooms.set(name, new Room()).get(name);
     }
 
-    falconFrame(app: FalconFrame, clientDir?: string) {
-        clientDir = clientDir || "node_modules/@wxn0brp/gloves-link-client/dist/";
+    falconFrame(app: FalconFrame, clientDir?: string | false) {
         const router = new Router();
         app.use("/gloves-link", router);
 
-        router.static("/", clientDir);
         router.get("/status", (req, res) => {
             const id = req.query.id as string;
             if (!id) {
@@ -129,6 +127,10 @@ export class GlovesLinkServer {
             res.json({ status });
             delete this.initStatusTemp[id];
         });
+
+        if (clientDir === false) return;
+        clientDir = clientDir || "node_modules/@wxn0brp/gloves-link-client/dist/";
+        router.static("/", clientDir);
         router.get("/*", (req, res) => {
             res.redirect("/gloves-link/GlovesLinkClient.js");
             res.end();
