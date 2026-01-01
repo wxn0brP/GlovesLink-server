@@ -1,11 +1,12 @@
 import { WebSocket } from "ws";
-import { Server_AckEvent, Server_DataEvent } from "./types";
 import { GlovesLinkServer } from ".";
-import { joinSocketToRoom, leaveAllSocketFromRoom, leaveSocketFromRoom } from "./room";
+import { joinSocketToRoom, leaveSocketFromRoom } from "./room";
+import { Server_AckEvent, Server_DataEvent } from "./types";
 
 export class GLSocket {
     public id: string;
-    public user: Record<string, any> = {};
+    public user: any = {};
+    public namespace: string;
     ackIdCounter = 1;
     ackCallbacks: Map<number, Function> = new Map();
     logs = false;
@@ -102,7 +103,9 @@ export class GLSocket {
     }
 
     leaveAllRooms() {
-        leaveAllSocketFromRoom(this);
+        for (const roomName of this.rooms) {
+            leaveSocketFromRoom(this, roomName);
+        }
         this.rooms.clear();
     }
 }

@@ -4,7 +4,6 @@ import Stream from "stream";
 export interface Server_Opts {
     server: http.Server;
     logs: boolean;
-    authFn: AuthFn;
 }
 
 export interface Server_DataEvent {

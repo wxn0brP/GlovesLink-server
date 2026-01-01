@@ -4,20 +4,21 @@ import { GLSocket } from "./socket";
 import FalconFrame, { Router } from "@wxn0brp/falcon-frame";
 import { Room, Rooms } from "./room";
 
+import { Namespace } from "./namespace";
+
 export class GlovesLinkServer {
     public wss: WebSocketServer;
-    private onConnectEvent: (ws: GLSocket) => void;
     public logs = false;
     public opts: Server_Opts;
     public initStatusTemp: { [key: string]: number } = {}
     public rooms: Rooms = new Map();
-    public globalRoom: Room = new Room();
+
+    private namespaces = new Map<string, Namespace>();
 
     constructor(opts: Partial<Server_Opts>) {
         this.opts = {
             server: null,
             logs: false,
-            authFn: () => true,
             ...opts
         }
 
@@ -37,15 +38,17 @@ export class GlovesLinkServer {
                 const url = new URL(request.url!, `http://${request.headers.host}`);
                 const token = url.searchParams.get("token");
                 socketSelfId = url.searchParams.get("id");
+                const { pathname } = url;
 
-                const authResult = await this.opts.authFn({
-                    headers,
-                    url,
-                    token,
-                    request,
-                    socket,
-                    head
-                });
+                const namespace = this.namespaces.get(pathname);
+                if (!namespace) {
+                    this.saveSocketStatus(socketSelfId, 404);
+                    socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+                    socket.destroy();
+                    return;
+                }
+
+                const authResult = await namespace.authFn({ headers, url, token, request, socket, head });
 
                 if (!authResult) {
                     this.saveSocketStatus(socketSelfId, 401);
@@ -57,16 +60,16 @@ export class GlovesLinkServer {
                 this.wss.handleUpgrade(request, socket, head, (ws) => {
                     const glSocket = new GLSocket(ws, this);
                     glSocket.logs = this.logs;
-
                     if (typeof authResult === "object" && authResult !== null) glSocket.user = authResult;
 
-                    this.globalRoom.join(glSocket);
-                    this.onConnectEvent(glSocket);
+                    glSocket.namespace = pathname;
+                    namespace.room.join(glSocket);
+
+                    namespace.onConnectHandler(glSocket);
 
                     ws.on("close", () => {
                         glSocket.handlers?.disconnect?.();
-                        glSocket.leaveAllRooms();
-                        this.globalRoom.leave(glSocket);
+                        namespace.room.leave(glSocket);
                     });
                 });
             } catch (err) {
@@ -87,22 +90,19 @@ export class GlovesLinkServer {
         }, 10_000);
     }
 
-    onConnect(handler: (ws: GLSocket) => void) {
-        this.onConnectEvent = handler;
-    }
-
-    broadcast(event: string, ...args: any[]) {
-        this.globalRoom.emit(event, ...args);
+    of(path: string): Namespace {
+        let namespace = this.namespaces.get(path);
+        if (!namespace) {
+            namespace = new Namespace(path, this);
+            this.namespaces.set(path, namespace);
+        }
+        return namespace;
     }
 
     broadcastRoom(roomName: string, event: string, ...args: any[]) {
         const room = this.room(roomName);
         if (!room) return;
         room.emit(event, ...args);
-    }
-
-    broadcastWithoutSelf(socket: GLSocket, event: string, ...args: any[]) {
-        this.globalRoom.emitWithoutSelf(socket, event, ...args);
     }
 
     room(name: string): Room {
@@ -137,5 +137,7 @@ export class GlovesLinkServer {
 }
 
 export {
-    GLSocket
+    GLSocket,
+    Namespace,
+    Server_Opts
 }
