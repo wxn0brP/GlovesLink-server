@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.10](https://github.com/wxn0brP/GlovesLink-server/compare/v0.0.9...v0.0.10) (2026-01-02)
+
+
+### Features
+
+* rebuild create server ([4a38c2f](https://github.com/wxn0brP/GlovesLink-server/commit/4a38c2f107078e3d95e9134e4d05020725f63261))
+
 ### [0.0.9](https://github.com/wxn0brP/GlovesLink-server/compare/v0.0.8...v0.0.9) (2026-01-02)
 
 
