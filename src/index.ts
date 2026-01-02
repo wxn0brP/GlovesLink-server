@@ -6,6 +6,9 @@ import { Room, Rooms } from "./room";
 
 import { Namespace } from "./namespace";
 
+/**
+ * GlovesLinkServer class provides a WebSocket server with namespace and room functionality
+ */
 export class GlovesLinkServer {
     public wss: WebSocketServer;
     public logs = false;
@@ -14,6 +17,10 @@ export class GlovesLinkServer {
     public rooms: Rooms = new Map();
     public namespaces = new Map<string, Namespace>();
 
+    /**
+     * Creates a new GlovesLinkServer instance
+     * @param opts - Server options including the HTTP server instance
+     */
     constructor(opts: Partial<Server_Opts>) {
         this.opts = {
             server: null,
@@ -87,6 +94,14 @@ export class GlovesLinkServer {
         });
     }
 
+    /**
+     * Saves the status of a socket connection for temporary tracking
+     * @param socketSelfId - The ID of the socket
+     * @param namespace - The namespace of the socket
+     * @param status - The status code to save
+     * @param msg - Optional message to save with the status
+     * @private
+     */
     private saveSocketStatus(socketSelfId: string, namespace: string, status: number, msg?: string) {
         if (!socketSelfId) return;
         const id = namespace + "-" + socketSelfId;
@@ -99,6 +114,11 @@ export class GlovesLinkServer {
         }, 10_000);
     }
 
+    /**
+     * Gets or creates a namespace by path
+     * @param path - The path for the namespace
+     * @returns The namespace instance
+     */
     of(path: string): Namespace {
         let namespace = this.namespaces.get(path);
         if (!namespace) {
@@ -108,16 +128,31 @@ export class GlovesLinkServer {
         return namespace;
     }
 
+    /**
+     * Broadcasts an event to all sockets in a room
+     * @param roomName - The name of the room to broadcast to
+     * @param event - The event name to broadcast
+     * @param args - Arguments to send with the event
+     */
     broadcastRoom(roomName: string, event: string, ...args: any[]) {
         const room = this.room(roomName);
         if (!room) return;
         room.emit(event, ...args);
     }
 
+    /**
+     * Gets or creates a room by name
+     * @param name - The name of the room
+     * @returns The room instance
+     */
     room(name: string): Room {
         return this.rooms.get(name) || this.rooms.set(name, new Room()).get(name);
     }
 
+    /**
+     * Creates a router for handling status requests
+     * @returns A router instance for status endpoints
+     */
     statusRouter() {
         const router = new Router();
 
@@ -146,6 +181,11 @@ export class GlovesLinkServer {
         return router;
     }
 
+    /**
+     * Creates a router for serving client files
+     * @param clientDir - Optional directory path for client files, defaults to node_modules/@wxn0brp/gloves-link-client/dist/
+     * @returns A router instance for client file serving
+     */
     clientRouter(clientDir?: string) {
         const router = new Router();
 
@@ -159,6 +199,11 @@ export class GlovesLinkServer {
         return router;
     }
 
+    /**
+     * Integrates the GlovesLink server with a FalconFrame application
+     * @param app - The FalconFrame application instance
+     * @param clientDir - Optional directory path for client files, or false to disable client serving
+     */
     falconFrame(app: FalconFrame, clientDir?: string | false) {
         const router = new Router();
         app.use("/gloves-link", router);
