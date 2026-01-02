@@ -1,10 +1,10 @@
-import { WebSocketServer } from "ws";
-import { Server_Opts } from "./types";
-import { GLSocket } from "./socket";
 import FalconFrame, { Router } from "@wxn0brp/falcon-frame";
-import { Room, Rooms } from "./room";
-
+import http from "http";
+import { WebSocketServer } from "ws";
 import { Namespace } from "./namespace";
+import { Room, Rooms } from "./room";
+import { GLSocket } from "./socket";
+import { Server_Opts } from "./types";
 
 /**
  * GlovesLinkServer class provides a WebSocket server with namespace and room functionality
@@ -23,19 +23,14 @@ export class GlovesLinkServer {
      */
     constructor(opts: Partial<Server_Opts>) {
         this.opts = {
-            server: null,
             logs: false,
             ...opts
         }
 
-        if (!this.opts?.server) {
-            throw new Error("Server is not provided");
-        }
-
-        const { server } = opts;
-
         this.wss = new WebSocketServer({ noServer: true });
+    }
 
+    createServer(server: http.Server) {
         server.on("upgrade", async (request, socket, head) => {
             const headers = request.headers;
 
@@ -216,4 +211,4 @@ export {
     GLSocket,
     Namespace,
     Server_Opts
-}
+};

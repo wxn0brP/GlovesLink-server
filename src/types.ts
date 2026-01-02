@@ -2,7 +2,6 @@ import http from "http";
 import Stream from "stream";
 
 export interface Server_Opts {
-    server: http.Server;
     logs: boolean;
 }
 
