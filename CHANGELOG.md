@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.11](https://github.com/wxn0brP/GlovesLink-server/compare/v0.0.10...v0.0.11) (2026-01-02)
+
+
+### Features
+
+* improve onConnect ([2fa0fcc](https://github.com/wxn0brP/GlovesLink-server/commit/2fa0fcce88d4a31a9f90f829eccac9c473daf595))
+
 ### [0.0.10](https://github.com/wxn0brP/GlovesLink-server/compare/v0.0.9...v0.0.10) (2026-01-02)
 
 
