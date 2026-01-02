@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.13](https://github.com/wxn0brP/GlovesLink-server/compare/v0.0.12...v0.0.13) (2026-01-02)
+
+
+### Features
+
+* disconnect ([4bd731a](https://github.com/wxn0brP/GlovesLink-server/commit/4bd731a1b49100a26cb6a668615ab02d2697a264))
+
+
+### Bug Fixes
+
+* logs ([629eaec](https://github.com/wxn0brP/GlovesLink-server/commit/629eaec65ca0b77e4cda157297dad7b76c5e9b8d))
+
 ### [0.0.12](https://github.com/wxn0brP/GlovesLink-server/compare/v0.0.11...v0.0.12) (2026-01-02)
 
 
