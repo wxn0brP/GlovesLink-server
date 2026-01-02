@@ -47,7 +47,12 @@ export class GlovesLinkServer {
                     return;
                 }
 
-                const authResult = await namespace.authFn({ headers, url, token, request, socket, head });
+                const data = url.searchParams.has("data") ? JSON.parse(url.searchParams.get("data")) : {};
+                const authResult = await namespace.authFn({
+                    token, data,
+                    url, headers,
+                    request, socket, head,
+                });
 
                 if (!authResult || authResult.status !== 200) {
                     this.saveSocketStatus(socketSelfId, pathname, authResult?.status || 401, authResult?.msg || "Unauthorized");

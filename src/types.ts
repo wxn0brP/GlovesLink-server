@@ -24,6 +24,7 @@ export interface Server_Auth_Opts {
     request: http.IncomingMessage;
     socket: Stream.Duplex;
     head: Buffer<ArrayBufferLike>;
+    data?: Record<string, any>;
 }
 
 export interface AuthFnResult {
