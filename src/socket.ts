@@ -190,4 +190,8 @@ export class GLSocket<T = { _id?: string }> {
     serverRooms() {
         return this.server.rooms;
     }
+
+    disconnect() {
+        this.ws.close();
+    }
 }
