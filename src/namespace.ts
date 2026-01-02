@@ -1,4 +1,4 @@
-import { AuthFn } from "./types";
+import { AuthFn, OnConnect } from "./types";
 import { GLSocket } from "./socket";
 import { Room } from "./room";
 import { GlovesLinkServer } from ".";
@@ -7,7 +7,7 @@ import { GlovesLinkServer } from ".";
  * Namespace class represents a logical grouping of sockets that can communicate with each other
  */
 export class Namespace {
-    private onConnectEvent: (ws: GLSocket) => void = () => { };
+    private onConnectEvent: OnConnect = () => { };
     public authFn: AuthFn = async () => ({ status: 200 });
     public room: Room;
 
@@ -26,7 +26,7 @@ export class Namespace {
      * @param handler - The function to be called when a socket connects to this namespace
      * @returns The current Namespace instance for chaining
      */
-    onConnect(handler: (ws: GLSocket) => void): this {
+    onConnect(handler: OnConnect): this {
         this.onConnectEvent = handler;
         return this;
     }

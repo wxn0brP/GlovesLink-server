@@ -4,7 +4,7 @@ import { WebSocketServer } from "ws";
 import { Namespace } from "./namespace";
 import { Room, Rooms } from "./room";
 import { GLSocket } from "./socket";
-import { Server_Opts } from "./types";
+import { Server_Auth_Opts, Server_Opts } from "./types";
 
 /**
  * GlovesLinkServer class provides a WebSocket server with namespace and room functionality
@@ -50,11 +50,12 @@ export class GlovesLinkServer {
                 }
 
                 const data = url.searchParams.has("data") ? JSON.parse(url.searchParams.get("data")) : {};
-                const authResult = await namespace.authFn({
+                const authData: Server_Auth_Opts = {
                     token, data,
                     url, headers,
                     request, socket, head,
-                });
+                }
+                const authResult = await namespace.authFn(authData);
 
                 if (!authResult || authResult.status !== 200) {
                     this.saveSocketStatus(socketSelfId, pathname, authResult?.status || 401, authResult?.msg || "Unauthorized");
@@ -72,7 +73,7 @@ export class GlovesLinkServer {
                     glSocket.namespace = pathname;
                     namespace.room.join(glSocket);
 
-                    namespace.onConnectHandler(glSocket);
+                    namespace.onConnectHandler(glSocket, authData, authResult);
 
                     ws.on("close", () => {
                         glSocket.handlers?.disconnect?.();

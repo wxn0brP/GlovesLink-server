@@ -1,5 +1,6 @@
 import http from "http";
 import Stream from "stream";
+import { GLSocket } from "./socket";
 
 export interface Server_Opts {
     logs: boolean;
@@ -34,3 +35,5 @@ export interface AuthFnResult {
 }
 
 export type AuthFn = (data: Server_Auth_Opts) => Promise<AuthFnResult>;
+
+export type OnConnect = (socket: GLSocket, auth: Server_Auth_Opts, result: AuthFnResult) => void;
