@@ -42,7 +42,7 @@ export class GlovesLinkServer {
 
                 const namespace = this.namespaces.get(pathname);
                 if (!namespace) {
-                    this.saveSocketStatus(socketSelfId, 404);
+                    this.saveSocketStatus(socketSelfId, pathname, 404);
                     socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
                     socket.destroy();
                     return;
@@ -51,7 +51,7 @@ export class GlovesLinkServer {
                 const authResult = await namespace.authFn({ headers, url, token, request, socket, head });
 
                 if (!authResult) {
-                    this.saveSocketStatus(socketSelfId, 401);
+                    this.saveSocketStatus(socketSelfId, pathname, 401);
                     socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
                     socket.destroy();
                     return;
@@ -75,18 +75,19 @@ export class GlovesLinkServer {
             } catch (err) {
                 if (process.env.NODE_ENV === "development") console.error("[GlovesLinkServer]", err);
                 if (this.logs) console.warn("[auth] Error during authentication:", err);
-                this.saveSocketStatus(socketSelfId, 500);
+                this.saveSocketStatus(socketSelfId, "/", 500);
                 socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
                 socket.destroy();
             }
         });
     }
 
-    private saveSocketStatus(socketSelfId: string, status: number) {
+    private saveSocketStatus(socketSelfId: string, namespace: string, status: number) {
         if (!socketSelfId) return;
-        this.initStatusTemp[socketSelfId] = status;
+        const id = namespace + "-" + socketSelfId;
+        this.initStatusTemp[id] = status;
         setTimeout(() => {
-            delete this.initStatusTemp[socketSelfId];
+            delete this.initStatusTemp[id];
         }, 10_000);
     }
 
@@ -119,7 +120,14 @@ export class GlovesLinkServer {
                 res.status(400).json({ err: true, msg: "No id provided" });
                 return;
             }
-            const status = this.initStatusTemp[id];
+
+            const path = req.query.path as string;
+            if (!path) {
+                res.status(400).json({ err: true, msg: "No path provided" });
+                return;
+            }
+
+            const status = this.initStatusTemp[path + "-" + id];
             if (status === undefined) {
                 res.status(404).json({ err: true, msg: "Socket not found" });
                 return;
