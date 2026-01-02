@@ -60,7 +60,7 @@ export class GlovesLinkServer {
                     const glSocket = new GLSocket(ws, this);
                     glSocket.logs = this.logs;
 
-                    if (typeof authResult.user === "object" && authResult.user !== null) glSocket.user = authResult as any;
+                    if (typeof authResult.user === "object" && authResult.user !== null) glSocket.user = authResult.user;
 
                     glSocket.namespace = pathname;
                     namespace.room.join(glSocket);
