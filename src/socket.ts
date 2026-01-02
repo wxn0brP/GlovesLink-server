@@ -1,7 +1,7 @@
 import { WebSocket } from "ws";
 import { GlovesLinkServer } from ".";
 import { joinSocketToRoom, leaveSocketFromRoom, Room, Rooms } from "./room";
-import { Server_AckEvent, Server_DataEvent } from "./types";
+import { AuthFnResult, Server_AckEvent, Server_Auth_Opts, Server_DataEvent } from "./types";
 
 /**
  * GLSocket class represents a WebSocket connection with additional functionality
@@ -16,6 +16,8 @@ export class GLSocket<T = { _id?: string }> {
     logs = false;
     public handlers: { [key: string]: Function };
     public rooms: Set<string> = new Set();
+    public authData: Server_Auth_Opts;
+    public authResult: AuthFnResult;
 
     /**
      * Creates a new GLSocket instance

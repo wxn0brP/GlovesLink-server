@@ -67,6 +67,8 @@ export class GlovesLinkServer {
                 this.wss.handleUpgrade(request, socket, head, (ws) => {
                     const glSocket = new GLSocket(ws, this);
                     glSocket.logs = this.logs;
+                    glSocket.authData = authData;
+                    glSocket.authResult = authResult;
 
                     if (typeof authResult.user === "object" && authResult.user !== null) glSocket.user = authResult.user;
 
