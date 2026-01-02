@@ -1,6 +1,6 @@
 import { WebSocket } from "ws";
 import { GlovesLinkServer } from ".";
-import { joinSocketToRoom, leaveSocketFromRoom } from "./room";
+import { joinSocketToRoom, leaveSocketFromRoom, Room, Rooms } from "./room";
 import { Server_AckEvent, Server_DataEvent } from "./types";
 
 export class GLSocket<T = { _id?: string }> {
@@ -112,5 +112,17 @@ export class GLSocket<T = { _id?: string }> {
 
     getNamespace() {
         return this.server.namespaces.get(this.namespace);
+    }
+
+    namespaceRoom() {
+        return this.getNamespace()?.room;
+    }
+
+    serverRoom(roomName: string) {
+        return this.server.room(roomName);
+    }
+
+    serverRooms() {
+        return this.server.rooms;
     }
 }
