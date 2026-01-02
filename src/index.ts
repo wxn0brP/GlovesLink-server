@@ -11,7 +11,6 @@ import { Server_Auth_Opts, Server_Opts } from "./types";
  */
 export class GlovesLinkServer {
     public wss: WebSocketServer;
-    public logs = false;
     public opts: Server_Opts;
     public initStatusTemp: Record<string, { status: number, msg?: string }> = {};
     public rooms: Rooms = new Map();
@@ -66,7 +65,7 @@ export class GlovesLinkServer {
 
                 this.wss.handleUpgrade(request, socket, head, (ws) => {
                     const glSocket = new GLSocket(ws, this);
-                    glSocket.logs = this.logs;
+                    glSocket.logs = this.opts.logs;
                     glSocket.authData = authData;
                     glSocket.authResult = authResult;
 
@@ -84,7 +83,7 @@ export class GlovesLinkServer {
                 });
             } catch (err) {
                 if (process.env.NODE_ENV === "development") console.error("[GlovesLinkServer]", err);
-                if (this.logs) console.warn("[auth] Error during authentication:", err);
+                if (this.opts.logs) console.warn("[ws auth] Error during authentication:", err);
                 this.saveSocketStatus(socketSelfId, "/", 500);
                 socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
                 socket.destroy();

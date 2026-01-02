@@ -52,6 +52,7 @@ export class GLSocket<T = { _id?: string }> {
 
         if ("ack" in msg) {
             const ackId = msg.ack;
+            if (this.logs) console.log("[ws] Received ack:", ackId);
             const ackCallback = this.ackCallbacks.get(ackId);
             if (ackCallback) {
                 this.ackCallbacks.delete(ackId);
@@ -62,6 +63,7 @@ export class GLSocket<T = { _id?: string }> {
 
         const { evt, data, ackI } = msg;
         if (!evt || (data && !Array.isArray(data))) return;
+        if (this.logs) console.log("[ws] Received event:", evt, data);
 
         if (Array.isArray(ackI)) {
             for (let i = 0; i < ackI.length; i++) {
