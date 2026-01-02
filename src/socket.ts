@@ -3,9 +3,9 @@ import { GlovesLinkServer } from ".";
 import { joinSocketToRoom, leaveSocketFromRoom } from "./room";
 import { Server_AckEvent, Server_DataEvent } from "./types";
 
-export class GLSocket {
+export class GLSocket<T = { _id?: string }> {
     public id: string;
-    public user: any = {};
+    public user: T;
     public namespace: string;
     ackIdCounter = 1;
     ackCallbacks: Map<number, Function> = new Map();
@@ -19,6 +19,7 @@ export class GLSocket {
         id?: string
     ) {
         this.id = id || Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
+        this.user = { _id: this.id } as T;
         this.handlers = {};
         this.ws.on("message", (raw: string) => this._handle(raw));
     }
@@ -107,5 +108,9 @@ export class GLSocket {
             leaveSocketFromRoom(this, roomName);
         }
         this.rooms.clear();
+    }
+
+    getNamespace() {
+        return this.server.namespaces.get(this.namespace);
     }
 }

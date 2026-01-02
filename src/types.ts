@@ -26,4 +26,11 @@ export interface Server_Auth_Opts {
     head: Buffer<ArrayBufferLike>;
 }
 
-export type AuthFn = (data: Server_Auth_Opts) => (Promise<object | boolean> | object | boolean);
+export interface AuthFnResult {
+    status: number;
+    user?: Record<string, any>;
+    msg?: string;
+    toSet?: Record<string, any>;
+}
+
+export type AuthFn = (data: Server_Auth_Opts) => Promise<AuthFnResult>;

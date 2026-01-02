@@ -10,10 +10,9 @@ export class GlovesLinkServer {
     public wss: WebSocketServer;
     public logs = false;
     public opts: Server_Opts;
-    public initStatusTemp: { [key: string]: number } = {}
+    public initStatusTemp: Record<string, { status: number, msg?: string }> = {};
     public rooms: Rooms = new Map();
-
-    private namespaces = new Map<string, Namespace>();
+    public namespaces = new Map<string, Namespace>();
 
     constructor(opts: Partial<Server_Opts>) {
         this.opts = {
@@ -50,8 +49,8 @@ export class GlovesLinkServer {
 
                 const authResult = await namespace.authFn({ headers, url, token, request, socket, head });
 
-                if (!authResult) {
-                    this.saveSocketStatus(socketSelfId, pathname, 401);
+                if (!authResult || authResult.status !== 200) {
+                    this.saveSocketStatus(socketSelfId, pathname, authResult?.status || 401, authResult?.msg || "Unauthorized");
                     socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
                     socket.destroy();
                     return;
@@ -60,7 +59,8 @@ export class GlovesLinkServer {
                 this.wss.handleUpgrade(request, socket, head, (ws) => {
                     const glSocket = new GLSocket(ws, this);
                     glSocket.logs = this.logs;
-                    if (typeof authResult === "object" && authResult !== null) glSocket.user = authResult;
+
+                    if (typeof authResult.user === "object" && authResult.user !== null) glSocket.user = authResult as any;
 
                     glSocket.namespace = pathname;
                     namespace.room.join(glSocket);
@@ -82,10 +82,13 @@ export class GlovesLinkServer {
         });
     }
 
-    private saveSocketStatus(socketSelfId: string, namespace: string, status: number) {
+    private saveSocketStatus(socketSelfId: string, namespace: string, status: number, msg?: string) {
         if (!socketSelfId) return;
         const id = namespace + "-" + socketSelfId;
-        this.initStatusTemp[id] = status;
+        this.initStatusTemp[id] = {
+            status,
+            msg
+        }
         setTimeout(() => {
             delete this.initStatusTemp[id];
         }, 10_000);
@@ -110,9 +113,8 @@ export class GlovesLinkServer {
         return this.rooms.get(name) || this.rooms.set(name, new Room()).get(name);
     }
 
-    falconFrame(app: FalconFrame, clientDir?: string | false) {
+    statusRouter() {
         const router = new Router();
-        app.use("/gloves-link", router);
 
         router.get("/status", (req, res) => {
             const id = req.query.id as string;
@@ -136,13 +138,27 @@ export class GlovesLinkServer {
             delete this.initStatusTemp[id];
         });
 
-        if (clientDir === false) return;
+        return router;
+    }
+
+    clientRouter(clientDir?: string) {
+        const router = new Router();
+
         clientDir = clientDir || "node_modules/@wxn0brp/gloves-link-client/dist/";
         router.static("/", clientDir);
         router.get("/*", (req, res) => {
             res.redirect("/gloves-link/GlovesLinkClient.js");
             res.end();
         });
+
+        return router;
+    }
+
+    falconFrame(app: FalconFrame, clientDir?: string | false) {
+        const router = new Router();
+        app.use("/gloves-link", router);
+        router.use(this.statusRouter());
+        if (clientDir !== false) router.use(this.clientRouter(clientDir));
     }
 }
 

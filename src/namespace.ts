@@ -5,7 +5,7 @@ import { GlovesLinkServer } from ".";
 
 export class Namespace {
     private onConnectEvent: (ws: GLSocket) => void = () => { };
-    public authFn: AuthFn = () => false;
+    public authFn: AuthFn = async () => ({ status: 200 });
     public room: Room;
 
     constructor(public name: string, private server: GlovesLinkServer) {
