@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.9](https://github.com/wxn0brP/GlovesLink-server/compare/v0.0.8...v0.0.9) (2026-01-02)
+
+
+### Features
+
+* connection data ([d446849](https://github.com/wxn0brP/GlovesLink-server/commit/d4468497c636e02ecbf473437c078ea488a2cfe3))
+* socket room/namespace utils ([5046da7](https://github.com/wxn0brP/GlovesLink-server/commit/5046da7dfd09f58e3069344cb36632a86333cc04))
+
 ### [0.0.8](https://github.com/wxn0brP/GlovesLink-server/compare/v0.0.7...v0.0.8) (2026-01-02)
 
 
