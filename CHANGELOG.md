@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.8](https://github.com/wxn0brP/GlovesLink-server/compare/v0.0.7...v0.0.8) (2026-01-02)
+
+
+### Bug Fixes
+
+* glSocket.user ([a187854](https://github.com/wxn0brP/GlovesLink-server/commit/a187854e3b16835a9ee7f6d244f74161a1bc0bf9))
+
 ### [0.0.7](https://github.com/wxn0brP/GlovesLink-server/compare/v0.0.6...v0.0.7) (2026-01-02)
 
 
