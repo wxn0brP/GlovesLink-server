@@ -38,6 +38,7 @@ export class GlovesLinkServer {
                 const url = new URL(request.url!, `http://${request.headers.host}`);
                 const token = url.searchParams.get("token");
                 socketSelfId = url.searchParams.get("id");
+                const type: "json" | "bin" = url.searchParams.get("type") as any;
                 const { pathname } = url;
 
                 const namespace = this.namespaces.get(pathname);
@@ -68,6 +69,7 @@ export class GlovesLinkServer {
                     glSocket.logs = this.opts.logs;
                     glSocket.authData = authData;
                     glSocket.authResult = authResult;
+                    glSocket.dataFormatType = type && ["json", "bin"].includes(type) ? type : "json";
 
                     if (typeof authResult.user === "object" && authResult.user !== null) glSocket.user = authResult.user;
 

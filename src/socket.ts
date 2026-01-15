@@ -3,6 +3,8 @@ import { GlovesLinkServer } from ".";
 import { joinSocketToRoom, leaveSocketFromRoom } from "./room";
 import { AuthFnResult, Server_AckEvent, Server_Auth_Opts, Server_DataEvent } from "./types";
 
+const DELIMITER = process.env.GLOVES_LINK_DELIMITER || "\b";
+
 /**
  * GLSocket class represents a WebSocket connection with additional functionality
  * @template T - The type of user data associated with the socket
@@ -18,6 +20,7 @@ export class GLSocket<T = { _id?: string }> {
     public rooms: Set<string> = new Set();
     public authData: Server_Auth_Opts;
     public authResult: AuthFnResult;
+    public dataFormatType: "json" | "bin" = "json";
 
     /**
      * Creates a new GLSocket instance
@@ -33,7 +36,7 @@ export class GLSocket<T = { _id?: string }> {
         this.id = id || Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
         this.user = { _id: this.id } as T;
         this.handlers = {};
-        this.ws.on("message", (raw: string) => this._handle(raw));
+        this.ws.on("message", (raw: string) => this._handle(raw.toString()));
     }
 
     /**
@@ -41,12 +44,10 @@ export class GLSocket<T = { _id?: string }> {
      * @param raw - The raw message string received from the WebSocket
      */
     _handle(raw: string) {
-        let msg: Server_DataEvent | Server_AckEvent;
+        const msg = parse(this.dataFormatType, raw);
 
-        try {
-            msg = JSON.parse(raw);
-        } catch {
-            if (this.logs) console.warn("[ws] Invalid JSON:", raw);
+        if (!msg) {
+            if (this.logs) console.warn(`[ws] Invalid format (${this.dataFormatType}):`, raw);
             return;
         }
 
@@ -72,7 +73,7 @@ export class GLSocket<T = { _id?: string }> {
 
                 const ackId = data[ackIndex];
                 data[ackIndex] = (...res: any) => {
-                    this.ws.send(JSON.stringify({ ack: ackId, data: res }));
+                    this.ws.send(stringify(this.dataFormatType, { ack: ackId, data: res }));
                 }
             }
         }
@@ -106,7 +107,7 @@ export class GLSocket<T = { _id?: string }> {
             args[ackIndex] = ackId;
         }
 
-        this.ws.send(JSON.stringify({
+        this.ws.send(stringify(this.dataFormatType, {
             evt,
             data: args || undefined,
             ackI: ackI.length ? ackI : undefined
@@ -194,4 +195,53 @@ export class GLSocket<T = { _id?: string }> {
     disconnect() {
         this.ws.close();
     }
+}
+
+function parse(type: string, raw: string): Server_DataEvent | Server_AckEvent {
+    if (type === "json") {
+        try {
+            return JSON.parse(raw)
+        } catch {
+            return null;
+        }
+    }
+
+    try {
+        const [evt, ack, ackIdsString, ...contentString] = raw.split(DELIMITER);
+
+        const contents = contentString.map(value => {
+            try {
+                return JSON.parse(value);
+            } catch {
+                return value;
+            }
+        });
+
+        if (ack) {
+            return {
+                ack: Number(ack),
+                data: contents,
+            };
+        }
+
+        const ackIds = ackIdsString.split(",").filter(Boolean).map(Number);
+
+        return {
+            evt,
+            ackI: ackIds,
+            data: contents,
+        };
+    } catch {
+        return null;
+    }
+}
+
+function stringify(type: "json" | "bin", data: any) {
+    if (type === "json") return JSON.stringify(data);
+    return [
+        data.evt ?? "",
+        (data.ack ?? ""),
+        (data.ackI || []).join(","),
+        ...data.data.map(JSON.stringify)
+    ].join(DELIMITER);
 }
