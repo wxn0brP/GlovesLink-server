@@ -67,4 +67,14 @@ export class Namespace {
     emitWithoutSelf(socket: GLSocket, event: string, ...args: any[]) {
         this.room.emitWithoutSelf(socket, event, ...args);
     }
+
+    /**
+     * Emits an event to the socket associated with the specified user ID
+     * @param userId - The user ID to target
+     * @param event - The event name to emit
+     * @param args - The arguments to pass with the event
+     */
+    emitToUserId(userId: string, event: string, ...args: any[]) {
+        this.room.sockets.forEach(socket => socket.user?._id && socket.user._id === userId && socket.emit(event, ...args));
+    }
 }

@@ -147,6 +147,16 @@ export class GlovesLinkServer {
     }
 
     /**
+     * Emits an event to the socket associated with the specified user ID
+     * @param userId - The user ID to target
+     * @param event - The event name to emit
+     * @param args - The arguments to pass with the event
+     */
+    emitToUserId(userId: string, event: string, ...args: any[]) {
+        this.namespaces.forEach((ns) => ns.emitToUserId(userId, event, ...args));
+    }
+
+    /**
      * Creates a router for handling status requests
      * @returns A router instance for status endpoints
      */
