@@ -1,7 +1,7 @@
-import { AuthFn, OnConnect } from "./types";
-import { GLSocket } from "./socket";
-import { Room } from "./room";
 import { GlovesLinkServer } from ".";
+import { Room } from "./room";
+import { GLSocket } from "./socket";
+import { AuthFn, OnConnect } from "./types";
 
 /**
  * Namespace class represents a logical grouping of sockets that can communicate with each other

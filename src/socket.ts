@@ -1,6 +1,6 @@
 import { WebSocket } from "ws";
 import { GlovesLinkServer } from ".";
-import { joinSocketToRoom, leaveSocketFromRoom, Room, Rooms } from "./room";
+import { joinSocketToRoom, leaveSocketFromRoom } from "./room";
 import { AuthFnResult, Server_AckEvent, Server_Auth_Opts, Server_DataEvent } from "./types";
 
 /**
