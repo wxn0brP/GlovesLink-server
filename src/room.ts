@@ -7,7 +7,7 @@ export type Rooms = Map<string, Room>;
  * Room class represents a collection of sockets that can communicate with each other
  */
 export class Room {
-    clients: Set<GLSocket> = new Set();
+    _clients: Set<GLSocket> = new Set();
     eventEmitter = new EventEmitter();
 
     /**
@@ -15,7 +15,7 @@ export class Room {
      * @param socket - The socket to add to the room
      */
     join(socket: GLSocket) {
-        this.clients.add(socket);
+        this._clients.add(socket);
         this.eventEmitter.emit("join", socket, this);
     }
 
@@ -24,7 +24,7 @@ export class Room {
      * @param socket - The socket to remove from the room
      */
     leave(socket: GLSocket) {
-        this.clients.delete(socket);
+        this._clients.delete(socket);
         this.eventEmitter.emit("leave", socket, this);
     }
 
@@ -32,7 +32,7 @@ export class Room {
      * Removes all sockets from the room
      */
     leaveAll() {
-        this.clients.clear();
+        this._clients.clear();
         this.eventEmitter.emit("leaveAll", this);
     }
 
@@ -61,7 +61,7 @@ export class Room {
      * @returns The number of clients in the room
      */
     get size() {
-        return this.clients.size;
+        return this._clients.size;
     }
 
     /**
@@ -69,7 +69,7 @@ export class Room {
      * @returns An array containing all the sockets in the room
      */
     get sockets() {
-        return Array.from(this.clients);
+        return Array.from(this._clients);
     }
 
     /**
@@ -78,7 +78,7 @@ export class Room {
      * @param data - The data to send with the event
      */
     emit(evtName: string, ...data: any) {
-        for (const socket of this.clients) {
+        for (const socket of this._clients) {
             socket.emit(evtName, ...data);
         }
     }
@@ -90,7 +90,7 @@ export class Room {
      * @param data - The data to send with the event
      */
     emitWithoutSelf(socket: GLSocket, evtName: string, ...data: any) {
-        for (const client of this.clients) {
+        for (const client of this._clients) {
             if (client === socket) continue;
             client.emit(evtName, ...data);
         }
@@ -102,7 +102,7 @@ export class Room {
      * @returns True if the socket is in the room, false otherwise
      */
     has(socket: GLSocket) {
-        return this.clients.has(socket);
+        return this._clients.has(socket);
     }
 }
 
