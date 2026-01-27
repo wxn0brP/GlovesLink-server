@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.0.14](https://github.com/wxn0brP/GlovesLink-server/compare/v0.0.13...v0.0.14) (2026-01-27)
+
+
+### Features
+
+* bin ([07d694e](https://github.com/wxn0brP/GlovesLink-server/commit/07d694eaec01ae24706985eec816af27ed26a542))
+* emitToUserId ([8b1781e](https://github.com/wxn0brP/GlovesLink-server/commit/8b1781eb045347af36ab2b78123c1eaf1aba4a4a))
+
 ### [0.0.13](https://github.com/wxn0brP/GlovesLink-server/compare/v0.0.12...v0.0.13) (2026-01-02)
 
 
