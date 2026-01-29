@@ -15,14 +15,14 @@
         "build": "tsc && tsc-alias"
     },
     "devDependencies": {
-        "@wxn0brp/falcon-frame": "^0.5.3",
+        "@wxn0brp/falcon-frame": "^0.6.0",
         "@types/bun": "*",
         "@types/ws": "^8.18.1",
         "tsc-alias": "*",
         "typescript": "*"
     },
     "peerDependencies": {
-        "@wxn0brp/falcon-frame": ">=0.5.3"
+        "@wxn0brp/falcon-frame": ">=0.6.0"
     },
     "peerDependenciesMeta": {
         "@wxn0brp/falcon-frame": {
@@ -30,7 +30,7 @@
         }
     },
     "dependencies": {
-        "ws": "^8.18.3"
+        "ws": "^8.19.0"
     },
     "files": [
         "dist"
