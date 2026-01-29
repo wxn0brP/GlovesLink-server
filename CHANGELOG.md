@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.0-beta.1](https://github.com/wxn0brP/GlovesLink-server/compare/v0.1.0-beta.0...v0.1.0-beta.1) (2026-01-29)
+
+
+### Features
+
+* fixes ([7370d12](https://github.com/wxn0brP/GlovesLink-server/commit/7370d126dca429e99ee97df61f279b3c2b259b69))
+
 ## [0.1.0-beta.0](https://github.com/wxn0brP/GlovesLink-server/compare/v0.0.14...v0.1.0-beta.0) (2026-01-29)
 
 
