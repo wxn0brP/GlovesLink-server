@@ -81,7 +81,7 @@ export class GLSocket<T = { _id?: string }> {
             }
         }
 
-        this.handlers[evt]?.(...data);
+        this.handlers.emit(evt, ...data);
     }
 
     /**
@@ -167,5 +167,13 @@ export class GLSocket<T = { _id?: string }> {
      */
     room(name: string) {
         return this.namespace.room(name);
+    }
+
+    /**
+     * Gets a room by user ID
+     * @returns The room object or undefined if not found
+     */
+    userRoom() {
+        return this.namespace.userRoom((this.user as any)?._id);
     }
 }

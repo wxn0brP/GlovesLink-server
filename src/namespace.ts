@@ -8,7 +8,7 @@ import { AuthFn, OnConnect } from "./types";
  */
 export class Namespace {
     public _onConnectHandler: OnConnect = () => { };
-    public authFn: AuthFn = async () => ({ status: 200 });
+    public _authFn: AuthFn = async () => ({ status: 200 });
     public _room = new Room();
     public rooms: Rooms = new Map();
     public users: Rooms = new Map();
@@ -36,7 +36,7 @@ export class Namespace {
      * @returns The current Namespace instance for chaining
      */
     auth(authFn: AuthFn): this {
-        this.authFn = authFn;
+        this._authFn = authFn;
         return this;
     }
 
@@ -56,6 +56,15 @@ export class Namespace {
      */
     room(name: string) {
         return getRoom(this.rooms, name);
+    }
+
+    /**
+     * Gets or creates a room by user ID
+     * @param id - The user ID to get or create the room for
+     * @returns The Room instance
+     */
+    userRoom(id: string) {
+        return getRoom(this.users, id);
     }
 
     /**

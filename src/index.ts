@@ -60,7 +60,7 @@ export class GlovesLinkServer {
                     url, headers,
                     request, socket, head,
                 }
-                const authResult = await namespace.authFn(authData);
+                const authResult = await namespace._authFn(authData);
 
                 if (!authResult || authResult.status !== 200) {
                     saveSocketStatus(this, {
@@ -151,6 +151,15 @@ export class GlovesLinkServer {
      */
     room(name: string): Room {
         return this.of("/").room(name);
+    }
+
+    /**
+     * Gets or creates a room by user ID (from the root namespace)
+     * @param userId - The user ID
+     * @returns The room instance
+     */
+    userRoom(userId: string): Room {
+        return this.of("/").userRoom(userId);
     }
 
     /**
