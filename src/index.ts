@@ -1,8 +1,9 @@
 import FalconFrame, { Router } from "@wxn0brp/falcon-frame";
 import http from "http";
 import { WebSocketServer } from "ws";
+import { clientRouter, saveSocketStatus, statusRouter } from "./http";
 import { Namespace } from "./namespace";
-import { Room, Rooms } from "./room";
+import { getRoom, Room, Rooms } from "./room";
 import { GLSocket } from "./socket";
 import { Server_Auth_Opts, Server_Opts } from "./types";
 
@@ -13,7 +14,6 @@ export class GlovesLinkServer {
     public wss: WebSocketServer;
     public opts: Server_Opts;
     public initStatusTemp: Record<string, { status: number, msg?: string }> = {};
-    public rooms: Rooms = new Map();
     public namespaces = new Map<string, Namespace>();
 
     /**
@@ -23,13 +23,14 @@ export class GlovesLinkServer {
     constructor(opts: Partial<Server_Opts>) {
         this.opts = {
             logs: false,
+            statusTimeout: 10_000,
             ...opts
         }
 
         this.wss = new WebSocketServer({ noServer: true });
     }
 
-    createServer(server: http.Server) {
+    attachToHttpServer(server: http.Server) {
         server.on("upgrade", async (request, socket, head) => {
             const headers = request.headers;
 
@@ -43,7 +44,11 @@ export class GlovesLinkServer {
 
                 const namespace = this.namespaces.get(pathname);
                 if (!namespace) {
-                    this.saveSocketStatus(socketSelfId, pathname, 404);
+                    saveSocketStatus(this, {
+                        socketSelfId,
+                        namespace: pathname,
+                        status: 404
+                    });
                     socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
                     socket.destroy();
                     return;
@@ -58,7 +63,12 @@ export class GlovesLinkServer {
                 const authResult = await namespace.authFn(authData);
 
                 if (!authResult || authResult.status !== 200) {
-                    this.saveSocketStatus(socketSelfId, pathname, authResult?.status || 401, authResult?.msg || "Unauthorized");
+                    saveSocketStatus(this, {
+                        socketSelfId,
+                        namespace: pathname,
+                        status: authResult?.status || 401,
+                        msg: authResult?.msg || "Unauthorized"
+                    });
                     socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
                     socket.destroy();
                     return;
@@ -73,44 +83,39 @@ export class GlovesLinkServer {
 
                     if (typeof authResult.user === "object" && authResult.user !== null) glSocket.user = authResult.user;
 
-                    glSocket.namespace = pathname;
-                    namespace.room.join(glSocket);
+                    glSocket.namespacePath = pathname;
+                    glSocket.namespace = namespace;
 
-                    namespace.onConnectHandler(glSocket, authData, authResult);
+                    namespace._room.join(glSocket);
+                    const userId = authResult?.user?._id;
+                    if (userId)
+                        getRoom(namespace.users, userId).join(glSocket);
+
+                    namespace._onConnectHandler(glSocket, authData, authResult);
 
                     ws.on("close", () => {
-                        glSocket.handlers?.disconnect?.();
-                        namespace.room.leave(glSocket);
+                        glSocket.handlers.emit("disconnect");
+                        namespace._room.leave(glSocket);
+                        glSocket.leaveAllRooms();
+
+                        if (userId) {
+                            const room = getRoom(namespace.users, userId);
+                            room.leave(glSocket);
+                        }
                     });
                 });
             } catch (err) {
                 if (process.env.NODE_ENV === "development") console.error("[GlovesLinkServer]", err);
                 if (this.opts.logs) console.warn("[ws auth] Error during authentication:", err);
-                this.saveSocketStatus(socketSelfId, "/", 500);
+                saveSocketStatus(this, {
+                    socketSelfId,
+                    namespace: "/",
+                    status: 500
+                });
                 socket.write("HTTP/1.1 500 Internal Server Error\r\n\r\n");
                 socket.destroy();
             }
         });
-    }
-
-    /**
-     * Saves the status of a socket connection for temporary tracking
-     * @param socketSelfId - The ID of the socket
-     * @param namespace - The namespace of the socket
-     * @param status - The status code to save
-     * @param msg - Optional message to save with the status
-     * @private
-     */
-    private saveSocketStatus(socketSelfId: string, namespace: string, status: number, msg?: string) {
-        if (!socketSelfId) return;
-        const id = namespace + "-" + socketSelfId;
-        this.initStatusTemp[id] = {
-            status,
-            msg
-        }
-        setTimeout(() => {
-            delete this.initStatusTemp[id];
-        }, 10_000);
     }
 
     /**
@@ -140,12 +145,12 @@ export class GlovesLinkServer {
     }
 
     /**
-     * Gets or creates a room by name
+     * Gets or creates a room by name (from the root namespace)
      * @param name - The name of the room
      * @returns The room instance
      */
     room(name: string): Room {
-        return this.rooms.get(name) || this.rooms.set(name, new Room()).get(name);
+        return this.of("/").room(name);
     }
 
     /**
@@ -159,56 +164,6 @@ export class GlovesLinkServer {
     }
 
     /**
-     * Creates a router for handling status requests
-     * @returns A router instance for status endpoints
-     */
-    statusRouter() {
-        const router = new Router();
-
-        router.get("/status", (req, res) => {
-            const id = req.query.id as string;
-            if (!id) {
-                res.status(400).json({ err: true, msg: "No id provided" });
-                return;
-            }
-
-            const path = req.query.path as string;
-            if (!path) {
-                res.status(400).json({ err: true, msg: "No path provided" });
-                return;
-            }
-
-            const status = this.initStatusTemp[path + "-" + id];
-            if (status === undefined) {
-                res.status(404).json({ err: true, msg: "Socket not found" });
-                return;
-            }
-            res.json({ status });
-            delete this.initStatusTemp[id];
-        });
-
-        return router;
-    }
-
-    /**
-     * Creates a router for serving client files
-     * @param clientDir - Optional directory path for client files, defaults to node_modules/@wxn0brp/gloves-link-client/dist/
-     * @returns A router instance for client file serving
-     */
-    clientRouter(clientDir?: string) {
-        const router = new Router();
-
-        clientDir = clientDir || "node_modules/@wxn0brp/gloves-link-client/dist/";
-        router.static("/", clientDir);
-        router.get("/*", (req, res) => {
-            res.redirect("/gloves-link/GlovesLinkClient.js");
-            res.end();
-        });
-
-        return router;
-    }
-
-    /**
      * Integrates the GlovesLink server with a FalconFrame application
      * @param app - The FalconFrame application instance
      * @param clientDir - Optional directory path for client files, or false to disable client serving
@@ -216,8 +171,8 @@ export class GlovesLinkServer {
     falconFrame(app: FalconFrame, clientDir?: string | false) {
         const router = new Router();
         app.use("/gloves-link", router);
-        router.use(this.statusRouter());
-        if (clientDir !== false) router.use(this.clientRouter(clientDir));
+        router.use(statusRouter());
+        if (clientDir !== false) router.use(clientRouter(clientDir));
     }
 }
 

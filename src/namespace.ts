@@ -1,5 +1,5 @@
 import { GlovesLinkServer } from ".";
-import { Room } from "./room";
+import { getRoom, Room, Rooms } from "./room";
 import { GLSocket } from "./socket";
 import { AuthFn, OnConnect } from "./types";
 
@@ -7,19 +7,18 @@ import { AuthFn, OnConnect } from "./types";
  * Namespace class represents a logical grouping of sockets that can communicate with each other
  */
 export class Namespace {
-    private onConnectEvent: OnConnect = () => { };
+    public _onConnectHandler: OnConnect = () => { };
     public authFn: AuthFn = async () => ({ status: 200 });
-    public room: Room;
+    public _room = new Room();
+    public rooms: Rooms = new Map();
+    public users: Rooms = new Map();
 
     /**
      * Creates a new Namespace instance
      * @param name - The name of the namespace
      * @param server - The GlovesLinkServer instance
      */
-    constructor(public name: string, private server: GlovesLinkServer) {
-        const roomName = `gls-namespace-${name}`;
-        this.room = this.server.room(roomName);
-    }
+    constructor(public name: string, private server: GlovesLinkServer) { }
 
     /**
      * Sets the connection event handler for this namespace
@@ -27,7 +26,7 @@ export class Namespace {
      * @returns The current Namespace instance for chaining
      */
     onConnect(handler: OnConnect): this {
-        this.onConnectEvent = handler;
+        this._onConnectHandler = handler;
         return this;
     }
 
@@ -42,20 +41,21 @@ export class Namespace {
     }
 
     /**
-     * Gets the connection event handler for this namespace
-     * @returns The connection event handler function
-     */
-    public get onConnectHandler() {
-        return this.onConnectEvent;
-    }
-
-    /**
      * Emits an event to all sockets in the namespace's room
      * @param event - The event name to emit
      * @param args - The arguments to pass with the event
      */
     emit(event: string, ...args: any[]) {
-        this.room.emit(event, ...args);
+        this._room.emit(event, ...args);
+    }
+
+    /**
+     * Gets or creates a room by name
+     * @param name - The name of the room to get or create
+     * @returns The Room instance
+     */
+    room(name: string) {
+        return getRoom(this.rooms, name);
     }
 
     /**
@@ -65,7 +65,7 @@ export class Namespace {
      * @param args - The arguments to pass with the event
      */
     emitWithoutSelf(socket: GLSocket, event: string, ...args: any[]) {
-        this.room.emitWithoutSelf(socket, event, ...args);
+        this._room.emitWithoutSelf(socket, event, ...args);
     }
 
     /**
@@ -75,6 +75,6 @@ export class Namespace {
      * @param args - The arguments to pass with the event
      */
     emitToUserId(userId: string, event: string, ...args: any[]) {
-        this.room.sockets.forEach(socket => socket.user?._id && socket.user._id === userId && socket.emit(event, ...args));
+        this.users.get(userId)?.emit(event, ...args);
     }
 }

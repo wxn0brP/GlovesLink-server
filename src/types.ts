@@ -4,6 +4,7 @@ import { GLSocket } from "./socket";
 
 export interface Server_Opts {
     logs: boolean;
+    statusTimeout: number;
 }
 
 export interface Server_DataEvent {
@@ -37,3 +38,10 @@ export interface AuthFnResult {
 export type AuthFn = (data: Server_Auth_Opts) => Promise<AuthFnResult>;
 
 export type OnConnect = (socket: GLSocket, auth: Server_Auth_Opts, result: AuthFnResult) => void;
+
+export interface SocketStatus {
+    socketSelfId: string;
+    namespace: string;
+    status: number;
+    msg?: string;
+}

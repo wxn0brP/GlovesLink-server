@@ -16,6 +16,7 @@ export class Room {
      */
     join(socket: GLSocket) {
         this._clients.add(socket);
+        socket.rooms.add(this);
         this.eventEmitter.emit("join", socket, this);
     }
 
@@ -25,15 +26,21 @@ export class Room {
      */
     leave(socket: GLSocket) {
         this._clients.delete(socket);
+        socket.rooms.delete(this);
         this.eventEmitter.emit("leave", socket, this);
+        if (this._clients.size === 0)
+            this.eventEmitter.emit("empty", this);
     }
 
     /**
      * Removes all sockets from the room
      */
     leaveAll() {
+        for (const socket of this._clients)
+            socket.rooms.delete(this);
         this._clients.clear();
         this.eventEmitter.emit("leaveAll", this);
+        this.eventEmitter.emit("empty", this);
     }
 
     /**
@@ -107,35 +114,19 @@ export class Room {
 }
 
 /**
- * Adds a socket to a room by name, creating the room if it doesn't exist
- * @param socket - The socket to add to the room
- * @param name - The name of the room to join
+ * Gets or creates a room by name
+ * @param rooms - The map of rooms to search in
+ * @param name - The name of the room to get or create
+ * @returns The Room instance
  */
-export function joinSocketToRoom(socket: GLSocket, name: string) {
-    const rooms = socket.server.rooms;
-    const room = rooms.get(name) || rooms.set(name, new Room()).get(name);
-    room.join(socket);
-}
+export function getRoom(rooms: Rooms, name: string) {
+    const existedRoom = rooms.get(name);
+    if (existedRoom) return existedRoom;
 
-/**
- * Removes a socket from a room by name
- * @param socket - The socket to remove from the room
- * @param roomName - The name of the room to leave
- */
-export function leaveSocketFromRoom(socket: GLSocket, roomName: string) {
-    const rooms = socket.server.rooms;
-    const room = rooms.get(roomName);
-    if (!room) return;
-    room.leave(socket);
-    if (room.size > 0) return
-    rooms.delete(roomName);
-}
+    const createdRoom = new Room();
+    rooms.set(name, createdRoom);
 
-/**
- * Removes a socket from all rooms it has joined
- * @param socket - The socket to remove from all rooms
- */
-export function leaveAllSocketFromRoom(socket: GLSocket) {
-    const rooms = socket.server.rooms;
-    for (const room of rooms.values()) room.leave(socket);
+    createdRoom.eventEmitter.on("empty", () => rooms.delete(name));
+
+    return createdRoom;
 }

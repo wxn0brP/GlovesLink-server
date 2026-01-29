@@ -1,9 +1,9 @@
 import { WebSocket } from "ws";
-import { GlovesLinkServer } from ".";
-import { joinSocketToRoom, leaveSocketFromRoom } from "./room";
-import { AuthFnResult, Server_AckEvent, Server_Auth_Opts, Server_DataEvent } from "./types";
-
-const DELIMITER = process.env.GLOVES_LINK_DELIMITER || "\b";
+import { GlovesLinkServer, Namespace } from ".";
+import { Room } from "./room";
+import { AuthFnResult, Server_Auth_Opts } from "./types";
+import { parse, stringify } from "./transport";
+import EventEmitter from "events";
 
 /**
  * GLSocket class represents a WebSocket connection with additional functionality
@@ -12,12 +12,16 @@ const DELIMITER = process.env.GLOVES_LINK_DELIMITER || "\b";
 export class GLSocket<T = { _id?: string }> {
     public id: string;
     public user: T;
-    public namespace: string;
-    ackIdCounter = 1;
-    ackCallbacks: Map<number, Function> = new Map();
-    logs = false;
-    public handlers: { [key: string]: Function };
-    public rooms: Set<string> = new Set();
+
+    public namespacePath: string;
+    public namespace: Namespace;
+    public rooms: Set<Room> = new Set();
+
+    public ackIdCounter = 1;
+    public ackCallbacks: Map<number, Function> = new Map();
+    public logs = false;
+
+    public handlers = new EventEmitter();
     public authData: Server_Auth_Opts;
     public authResult: AuthFnResult;
     public dataFormatType: "json" | "bin" = "json";
@@ -35,7 +39,6 @@ export class GLSocket<T = { _id?: string }> {
     ) {
         this.id = id || Date.now().toString(36) + Math.random().toString(36).substring(2, 10);
         this.user = { _id: this.id } as T;
-        this.handlers = {};
         this.ws.on("message", (raw: string) => this._handle(raw.toString()));
     }
 
@@ -87,7 +90,7 @@ export class GLSocket<T = { _id?: string }> {
      * @param handler - The function to be called when the event is received
      */
     on(evt: string, handler: (...args: any[]) => void | any) {
-        this.handlers[evt] = handler;
+        this.handlers.on(evt, handler);
     }
 
     /**
@@ -127,7 +130,7 @@ export class GLSocket<T = { _id?: string }> {
     /**
      * Closes the WebSocket connection
      */
-    close() {
+    disconnect() {
         this.ws.close();
     }
 
@@ -135,113 +138,34 @@ export class GLSocket<T = { _id?: string }> {
      * Joins the socket to a room
      * @param roomName - The name of the room to join
      */
-    joinRoom(roomName: string) {
-        joinSocketToRoom(this, roomName);
-        this.rooms.add(roomName);
+    joinRoom(roomOrName: Room | string) {
+        const room = typeof roomOrName === "string" ? this.room(roomOrName) : roomOrName;
+        room.join(this);
     }
 
     /**
      * Removes the socket from a room
      * @param roomName - The name of the room to leave
      */
-    leaveRoom(roomName: string) {
-        leaveSocketFromRoom(this, roomName);
-        this.rooms.delete(roomName);
+    leaveRoom(roomOrName: Room | string) {
+        const room = typeof roomOrName === "string" ? this.room(roomOrName) : roomOrName;
+        room.leave(this);
     }
 
     /**
      * Removes the socket from all rooms it has joined
      */
     leaveAllRooms() {
-        for (const roomName of this.rooms) {
-            leaveSocketFromRoom(this, roomName);
-        }
-        this.rooms.clear();
+        for (const room of this.rooms.values())
+            room.leave(this);
     }
 
     /**
-     * Gets the namespace associated with this socket
-     * @returns The namespace object or undefined if not found
+     * Gets a room by name
+     * @param name - The name of the room to get
+     * @returns The room object or undefined if not found
      */
-    getNamespace() {
-        return this.server.namespaces.get(this.namespace);
+    room(name: string) {
+        return this.namespace.room(name);
     }
-
-    /**
-     * Gets the room associated with this socket's namespace
-     * @returns The room object or undefined if namespace is not found
-     */
-    namespaceRoom() {
-        return this.getNamespace()?.room;
-    }
-
-    /**
-     * Gets a room from the server by name
-     * @param roomName - The name of the room to retrieve
-     * @returns The room object
-     */
-    serverRoom(roomName: string) {
-        return this.server.room(roomName);
-    }
-
-    /**
-     * Gets all rooms from the server
-     * @returns A map of all rooms on the server
-     */
-    serverRooms() {
-        return this.server.rooms;
-    }
-
-    disconnect() {
-        this.ws.close();
-    }
-}
-
-function parse(type: string, raw: string): Server_DataEvent | Server_AckEvent {
-    if (type === "json") {
-        try {
-            return JSON.parse(raw)
-        } catch {
-            return null;
-        }
-    }
-
-    try {
-        const [evt, ack, ackIdsString, ...contentString] = raw.split(DELIMITER);
-
-        const contents = contentString.map(value => {
-            try {
-                return JSON.parse(value);
-            } catch {
-                return value;
-            }
-        });
-
-        if (ack) {
-            return {
-                ack: Number(ack),
-                data: contents,
-            };
-        }
-
-        const ackIds = ackIdsString.split(",").filter(Boolean).map(Number);
-
-        return {
-            evt,
-            ackI: ackIds,
-            data: contents,
-        };
-    } catch {
-        return null;
-    }
-}
-
-function stringify(type: "json" | "bin", data: any) {
-    if (type === "json") return JSON.stringify(data);
-    return [
-        data.evt ?? "",
-        (data.ack ?? ""),
-        (data.ackI || []).join(","),
-        ...data.data.map(JSON.stringify)
-    ].join(DELIMITER);
 }
