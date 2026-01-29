@@ -1,6 +1,6 @@
 import { Router } from "@wxn0brp/falcon-frame";
-import { SocketStatus } from "./types";
 import { GlovesLinkServer } from ".";
+import { SocketStatus } from "./types";
 
 /**
  * Saves the status of a socket connection for temporary tracking
@@ -29,7 +29,7 @@ export function saveSocketStatus(wss: GlovesLinkServer, socketStatus: SocketStat
  * Creates a router for handling status requests
  * @returns A router instance for status endpoints
  */
-export function statusRouter() {
+export function statusRouter(wss: GlovesLinkServer) {
     const router = new Router();
 
     router.get("/status", (req, res) => {
@@ -46,13 +46,13 @@ export function statusRouter() {
         }
 
         const statusKey = path + "-" + id;
-        const status = this.initStatusTemp[statusKey];
+        const status = wss.initStatusTemp[statusKey];
         if (status === undefined) {
             res.status(404).json({ err: true, msg: "Socket not found" });
             return;
         }
         res.json({ err: false, status });
-        delete this.initStatusTemp[statusKey];
+        delete wss.initStatusTemp[statusKey];
     });
 
     return router;

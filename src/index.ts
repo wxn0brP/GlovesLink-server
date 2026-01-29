@@ -180,7 +180,7 @@ export class GlovesLinkServer {
     falconFrame(app: FalconFrame, clientDir?: string | false) {
         const router = new Router();
         app.use("/gloves-link", router);
-        router.use(statusRouter());
+        router.use(statusRouter(this));
         if (clientDir !== false) router.use(clientRouter(clientDir));
     }
 }
