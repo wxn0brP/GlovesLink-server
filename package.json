@@ -6,11 +6,19 @@
     "author": "wxn0brP",
     "license": "MIT",
     "type": "module",
+    "description": "Web Socket Server",
     "repository": {
         "type": "git",
         "url": "https://github.com/wxn0brP/GlovesLink-server.git"
     },
     "homepage": "https://github.com/wxn0brP/GlovesLink",
+    "keywords": [
+        "socket",
+        "ws",
+        "web-socket",
+        "websocket",
+        "gloves-link"
+    ],
     "scripts": {
         "build": "tsc && tsc-alias"
     },
