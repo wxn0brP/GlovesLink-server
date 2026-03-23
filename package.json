@@ -23,7 +23,7 @@
         "build": "tsc && tsc-alias"
     },
     "devDependencies": {
-        "@wxn0brp/falcon-frame": "^0.7.0",
+        "@wxn0brp/falcon-frame": "^0.8.0",
         "@types/bun": "*",
         "@types/ws": "^8.18.1",
         "tsc-alias": "*",
