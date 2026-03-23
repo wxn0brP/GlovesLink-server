@@ -3,7 +3,7 @@ import http from "http";
 import { WebSocketServer } from "ws";
 import { clientRouter, saveSocketStatus, statusRouter } from "./http";
 import { Namespace } from "./namespace";
-import { getRoom, Room, Rooms } from "./room";
+import { getRoom, Room } from "./room";
 import { GLSocket } from "./socket";
 import { Server_Auth_Opts, Server_Opts } from "./types";
 

@@ -27,7 +27,7 @@
         "@types/bun": "*",
         "@types/ws": "^8.18.1",
         "tsc-alias": "*",
-        "typescript": "*"
+        "typescript": "^5"
     },
     "peerDependencies": {
         "@wxn0brp/falcon-frame": ">=0.7.0"
