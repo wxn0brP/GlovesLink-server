@@ -1,0 +1,55 @@
+{
+  "name": "@wxn0brp/gloves-link-server",
+  "version": "0.1.1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "author": "wxn0brP",
+  "license": "MIT",
+  "type": "module",
+  "description": "Web Socket Server",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wxn0brP/GlovesLink-server.git"
+  },
+  "homepage": "https://github.com/wxn0brP/GlovesLink",
+  "keywords": [
+    "socket",
+    "ws",
+    "web-socket",
+    "websocket",
+    "gloves-link"
+  ],
+  "devDependencies": {
+    "@wxn0brp/falcon-frame": "^0.8.1",
+    "@types/bun": "*",
+    "@types/ws": "^8.18.1",
+    "tsc-alias": "*",
+    "typescript": "^6"
+  },
+  "peerDependencies": {
+    "@wxn0brp/falcon-frame": ">=0.8.1"
+  },
+  "peerDependenciesMeta": {
+    "@wxn0brp/falcon-frame": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "ws": "^8.20.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js",
+      "default": "./dist/*.js"
+    }
+  }
+}
