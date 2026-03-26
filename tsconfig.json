@@ -4,16 +4,23 @@
         "target": "ES2022",
         "moduleResolution": "bundler",
         "paths": {
-            "#adapter": ["./src/adapter/node.js"]
+            "#adapter": [
+                "./src/adapter/node.js"
+            ]
         },
         "esModuleInterop": true,
         "skipLibCheck": true,
         "outDir": "./dist",
         "inlineSourceMap": false,
-        "declaration": true
+        "declaration": true,
+        "rootDir": "./src",
+        "strict": false,
+        "types": [
+            "@types/node"
+        ]
     },
     "include": [
-       "./src"
+        "./src"
     ],
     "exclude": [
         "node_modules"
