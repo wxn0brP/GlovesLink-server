@@ -28,7 +28,7 @@
         "@wxn0brp/biome": "*",
         "@wxn0brp/falcon-frame": "^0.8.1",
         "tsc-alias": "*",
-        "typescript": "^6"
+        "typescript": "^7.0.0"
     },
     "peerDependencies": {
         "@wxn0brp/falcon-frame": ">=0.8.1"
