@@ -26,7 +26,7 @@ export class GlovesLinkServer {
 	 * Creates a new GlovesLinkServer instance
 	 * @param opts - Server options including the HTTP server instance
 	 */
-	constructor(opts: Partial<Server_Opts>) {
+	constructor(opts: Partial<Server_Opts> = {}) {
 		this.opts = {
 			logs: false,
 			statusTimeout: 10_000,
