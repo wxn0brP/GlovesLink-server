@@ -34,18 +34,21 @@ import { FalconFrame } from '@wxn0brp/falcon-frame';
 const app = new FalconFrame();
 const httpServer = app.listen(3000);
 
-const glovesLink = new GlovesLinkServer({
-    server: httpServer,
-    logs: true,
-    authFn: async ({ headers, url, token }) => {
-        // Implement your authentication logic here
-        return true;
-    }
-});
+const glovesLink = new GlovesLinkServer({ logs: true });
+glovesLink.attachToHttpServer(httpServer);
 glovesLink.falconFrame(app);
 
-glovesLink.onConnect((socket) => {
-    console.log('New connection:', socket.id);
+const namespace = glovesLink.of("/");
+
+namespace.auth(async ({ token }) => {
+    if (token === "valid-token") {
+        return { status: 200, user: { _id: "user1", name: "Alice" } };
+    }
+    return { status: 401, msg: "Invalid token" };
+});
+
+namespace.onConnect((socket, authData, authResult) => {
+    console.log('New connection:', socket.id, 'User:', socket.user?.name);
 
     socket.on('exampleEvent', (data) => {
         console.log('Received data:', data);
