@@ -1,6 +1,7 @@
 import { GlovesLinkServer } from ".";
 import { getRoom, Room, Rooms } from "./room";
 import { GLSocket } from "./socket";
+import { SSESocket } from "./sse";
 import { AuthFn, OnConnect } from "./types";
 
 /**
@@ -14,6 +15,7 @@ export class Namespace {
 	public _room = new Room();
 	public rooms: Rooms = new Map();
 	public users: Rooms = new Map();
+	public _sseClients: Map<string, SSESocket> = new Map();
 
 	/**
 	 * Creates a new Namespace instance

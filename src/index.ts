@@ -1,10 +1,16 @@
 import FalconFrame, { Router } from "@wxn0brp/falcon-frame";
 import http from "http";
 import { WebSocketServer } from "ws";
-import { clientRouter, saveSocketStatus, statusRouter } from "./http";
+import {
+	clientRouter,
+	saveSocketStatus,
+	sseRouter,
+	statusRouter,
+} from "./http";
 import { Namespace } from "./namespace";
 import { getRoom, Room } from "./room";
 import { GLSocket } from "./socket";
+import { SSESocket } from "./sse";
 import { Server_Auth_Opts, Server_Opts } from "./types";
 
 /**
@@ -205,8 +211,9 @@ export class GlovesLinkServer {
 		const router = new Router();
 		app.use("/gloves-link", router);
 		router.use(statusRouter(this));
+		router.use(sseRouter(this));
 		if (clientDir !== false) router.use(clientRouter(clientDir));
 	}
 }
 
-export { GLSocket, Namespace, Server_Opts };
+export { GLSocket, Namespace, Server_Opts, SSESocket };
