@@ -39,7 +39,8 @@
         }
     },
     "dependencies": {
-        "ws": "^8.21.2"
+        "ws": "^8.21.2",
+        "@wxn0brp/event-emitter": "0.0.7"
     },
     "files": [
         "dist"

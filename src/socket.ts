@@ -3,7 +3,7 @@ import { GlovesLinkServer, Namespace } from ".";
 import { Room } from "./room";
 import { AuthFnResult, Server_Auth_Opts } from "./types";
 import { parse, stringify } from "./transport";
-import EventEmitter from "events";
+import VEE from "@wxn0brp/event-emitter";
 
 /**
  * GLSocket class represents a WebSocket connection with additional functionality
@@ -25,7 +25,7 @@ export class GLSocket<
 	public ackCallbacks: Map<number, Function> = new Map();
 	public logs = false;
 
-	public handlers = new EventEmitter();
+	public handlers = new VEE();
 	public authData: Server_Auth_Opts;
 	public authResult: AuthFnResult;
 	public dataFormatType: "json" | "bin" = "json";
