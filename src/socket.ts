@@ -30,6 +30,11 @@ export class GLSocket<
 	public authResult: AuthFnResult;
 	public dataFormatType: "json" | "bin" = "json";
 
+	public volatile: {
+		emit: (evt: string, ...args: any[]) => void;
+		send: (evt: string, ...args: any[]) => void;
+	};
+
 	/**
 	 * Creates a new GLSocket instance
 	 * @param ws - The underlying WebSocket connection
@@ -48,6 +53,17 @@ export class GLSocket<
 			_id: this.id,
 		} as T;
 		this.ws.on("message", (raw: string) => this._handle(raw.toString()));
+
+		this.volatile = {
+			emit: (evt: string, ...args: any[]) => {
+				if (this.ws.bufferedAmount > this.server.opts.maxBufferedAmount) return;
+				this.emit(evt, ...args);
+			},
+			send: (evt: string, ...args: any[]) => {
+				if (this.ws.bufferedAmount > this.server.opts.maxBufferedAmount) return;
+				this.emit(evt, ...args);
+			},
+		};
 	}
 
 	/**

@@ -5,6 +5,7 @@ import { GLSocket } from "./socket";
 export interface Server_Opts {
 	logs: boolean;
 	statusTimeout: number;
+	maxBufferedAmount: number;
 }
 
 export interface Server_DataEvent {

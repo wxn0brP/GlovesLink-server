@@ -30,6 +30,7 @@ export class GlovesLinkServer {
 		this.opts = {
 			logs: false,
 			statusTimeout: 10_000,
+			maxBufferedAmount: 1_048_576,
 			...opts,
 		};
 
