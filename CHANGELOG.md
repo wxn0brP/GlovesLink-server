@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.4](https://github.com/wxn0brP/GlovesLink-server/compare/v0.1.3...v0.1.4) (2026-09-17)
+
+
+### Features
+
+* sse ([537fa28](https://github.com/wxn0brP/GlovesLink-server/commit/537fa284629d4f582f00d03ace04f0777346fdc8))
+* VEE support ([c3fe351](https://github.com/wxn0brP/GlovesLink-server/commit/c3fe351c7c160582f50d15453839ecd7ade6b3b2))
+* volatile ([06db10d](https://github.com/wxn0brP/GlovesLink-server/commit/06db10dde9b30563abd28a6be772eada8e689b36))
+
 ### [0.1.3](https://github.com/wxn0brP/GlovesLink-server/compare/v0.1.2...v0.1.3) (2026-09-11)
 
 
