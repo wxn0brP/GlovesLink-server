@@ -1,6 +1,5 @@
 import { Server_AckEvent, Server_DataEvent } from "./types";
 
-const DELIMITER = process.env.GLOVES_LINK_DELIMITER || "\b";
 const EVENT_NAME_RE = /^[A-Za-z0-9_.:-]{1,64}$/;
 const RESERVED_EVENTS = new Set([
 	"__proto__",
@@ -46,61 +45,17 @@ export function normalizeAckIndexes(
 	);
 }
 
-export function parse(
-	type: string,
-	raw: string,
-): Server_DataEvent | Server_AckEvent | null {
-	if (type === "json") {
-		try {
-			const parsed = JSON.parse(raw);
-			return isPlainObject(parsed)
-				? (parsed as Server_DataEvent | Server_AckEvent)
-				: null;
-		} catch {
-			return null;
-		}
-	}
-
+export function parse(raw: string): Server_DataEvent | Server_AckEvent | null {
 	try {
-		const [evt, ack, ackIdsString, ...contentString] = raw.split(DELIMITER);
-
-		const contents = contentString.map(value => {
-			try {
-				return JSON.parse(value);
-			} catch {
-				return value;
-			}
-		});
-
-		if (ack) {
-			return {
-				ack: Number(ack),
-				data: contents,
-			};
-		}
-
-		const ackIds = ackIdsString
-			.split(",")
-			.filter(Boolean)
-			.map(Number)
-			.filter(index => Number.isInteger(index) && index >= 0);
-
-		return {
-			evt,
-			ackI: ackIds,
-			data: contents,
-		};
+		const parsed = JSON.parse(raw);
+		return isPlainObject(parsed)
+			? (parsed as Server_DataEvent | Server_AckEvent)
+			: null;
 	} catch {
 		return null;
 	}
 }
 
-export function stringify(type: "json" | "bin", data: any) {
-	if (type === "json") return JSON.stringify(data);
-	return [
-		data.evt ?? "",
-		data.ack ?? "",
-		(data.ackI || []).join(","),
-		...data.data.map(JSON.stringify),
-	].join(DELIMITER);
+export function stringify(data: any) {
+	return JSON.stringify(data);
 }

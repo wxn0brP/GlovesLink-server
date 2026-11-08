@@ -34,7 +34,6 @@ export class GLSocket<
 	public handlers = new VEE();
 	public authData: Server_Auth_Opts;
 	public authResult: AuthFnResult;
-	public dataFormatType: "json" | "bin" = "json";
 
 	public volatile: {
 		emit: (evt: string, ...args: any[]) => void;
@@ -85,11 +84,10 @@ export class GLSocket<
 	}
 
 	_process(raw: string) {
-		const msg = parse(this.dataFormatType, raw);
+		const msg = parse(raw);
 
 		if (!isPlainObject(msg)) {
-			if (this.logs)
-				console.warn(`[ws] Invalid format (${this.dataFormatType}):`, raw);
+			if (this.logs) console.warn("[ws] Invalid message:", raw);
 			return;
 		}
 
@@ -126,7 +124,7 @@ export class GLSocket<
 
 			args[ackIndex] = (...res: any[]) => {
 				this.ws.send(
-					stringify(this.dataFormatType, {
+					stringify({
 						ack: ackId,
 						data: res,
 					}),
@@ -167,7 +165,7 @@ export class GLSocket<
 		}
 
 		this.ws.send(
-			stringify(this.dataFormatType, {
+			stringify({
 				evt,
 				data: args || undefined,
 				ackI: ackI.length ? ackI : undefined,
