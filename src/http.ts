@@ -99,6 +99,15 @@ export function clientRouter(clientDir?: string) {
 	return router;
 }
 
+/**
+ * Extracts the namespace path from an SSE request path (`/gloves-link/sse/{namespace}`)
+ */
+function sseNamespacePath(path: string) {
+	const idx = path.indexOf("/sse");
+	if (idx === -1) return path;
+	return path.slice(idx + 4) || "/";
+}
+
 export function sseRouter(wss: GlovesLinkServer) {
 	const router = new Router();
 	const sseManager = new SSEManager();
@@ -107,7 +116,7 @@ export function sseRouter(wss: GlovesLinkServer) {
 		"/sse/*",
 		sseManager.getMiddleware(async (req, res) => {
 			try {
-				const pathname = req.path.replace("/sse", "");
+				const pathname = sseNamespacePath(req.path);
 				const namespace = wss.namespaces.get(pathname);
 
 				if (!namespace) {
@@ -161,6 +170,13 @@ export function sseRouter(wss: GlovesLinkServer) {
 
 				namespace._sseClients.set(req.sseId!, sseSocket);
 
+				res.sseSend({
+					evt: "__sse_id",
+					data: [
+						req.sseId,
+					],
+				});
+
 				namespace._onConnectHandler(sseSocket as any, authData, authResult);
 
 				req.on("close", () => {
@@ -184,7 +200,7 @@ export function sseRouter(wss: GlovesLinkServer) {
 
 	router.post("/sse/*", async (req, res) => {
 		try {
-			const pathname = req.path.replace("/sse", "");
+			const pathname = sseNamespacePath(req.path);
 			const namespace = wss.namespaces.get(pathname);
 
 			if (!namespace) {
