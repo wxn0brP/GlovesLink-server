@@ -19,14 +19,16 @@ import { Server_Auth_Opts, Server_Opts } from "./types";
 export class GlovesLinkServer {
 	public wss: WebSocketServer;
 	public opts: Server_Opts;
-	public initStatusTemp: Record<
+	public initStatusTemp = new Map<
 		string,
 		{
 			status: number;
 			msg?: string;
+			expiresAt: number;
 		}
-	> = {};
+	>();
 	public namespaces = new Map<string, Namespace>();
+	public _warnedNoAuth = new Set<string>();
 
 	/**
 	 * Creates a new GlovesLinkServer instance
@@ -37,11 +39,14 @@ export class GlovesLinkServer {
 			logs: false,
 			statusTimeout: 10_000,
 			maxBufferedAmount: 1_048_576,
+			maxPayload: 10_485_760,
+			maxStatusEntries: 10_000,
 			...opts,
 		};
 
 		this.wss = new WebSocketServer({
 			noServer: true,
+			maxPayload: this.opts.maxPayload,
 		});
 	}
 
@@ -68,6 +73,8 @@ export class GlovesLinkServer {
 					socket.destroy();
 					return;
 				}
+
+				this._warnIfNoAuth(namespace);
 
 				const data = url.searchParams.has("data")
 					? JSON.parse(url.searchParams.get("data"))
@@ -146,6 +153,15 @@ export class GlovesLinkServer {
 				socket.destroy();
 			}
 		});
+	}
+
+	_warnIfNoAuth(namespace: Namespace) {
+		if (namespace._authSet || this._warnedNoAuth.has(namespace.name)) return;
+
+		this._warnedNoAuth.add(namespace.name);
+		console.warn(
+			`[GlovesLink] Namespace "${namespace.name}" has no auth configured, all connections are accepted.`,
+		);
 	}
 
 	/**

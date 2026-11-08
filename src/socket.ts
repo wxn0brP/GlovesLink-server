@@ -2,7 +2,13 @@ import { WebSocket } from "ws";
 import { GlovesLinkServer, Namespace } from ".";
 import { Room } from "./room";
 import { AuthFnResult, Server_Auth_Opts } from "./types";
-import { parse, stringify } from "./transport";
+import {
+	isPlainObject,
+	isValidEventName,
+	normalizeAckIndexes,
+	parse,
+	stringify,
+} from "./transport";
 import VEE from "@wxn0brp/event-emitter";
 
 /**
@@ -71,9 +77,17 @@ export class GLSocket<
 	 * @param raw - The raw message string received from the WebSocket
 	 */
 	_handle(raw: string) {
+		try {
+			this._process(raw);
+		} catch (e) {
+			if (this.logs) console.warn("[ws] Dropped message:", e);
+		}
+	}
+
+	_process(raw: string) {
 		const msg = parse(this.dataFormatType, raw);
 
-		if (!msg) {
+		if (!isPlainObject(msg)) {
 			if (this.logs)
 				console.warn(`[ws] Invalid format (${this.dataFormatType}):`, raw);
 			return;
@@ -81,6 +95,10 @@ export class GLSocket<
 
 		if ("ack" in msg) {
 			const ackId = msg.ack;
+			if (!Number.isInteger(ackId) || !Array.isArray(msg.data)) {
+				if (this.logs) console.warn("[ws] Invalid ack:", msg);
+				return;
+			}
 			if (this.logs) console.log("[ws] Received ack:", ackId);
 			const ackCallback = this.ackCallbacks.get(ackId);
 			if (ackCallback) {
@@ -91,27 +109,32 @@ export class GLSocket<
 		}
 
 		const { evt, data, ackI } = msg;
-		if (!evt || (data && !Array.isArray(data))) return;
-		if (this.logs) console.log("[ws] Received event:", evt, data);
+		if (!isValidEventName(evt)) {
+			if (this.logs) console.warn("[ws] Invalid event name:", evt);
+			return;
+		}
+		if (data !== undefined && !Array.isArray(data)) return;
 
-		if (Array.isArray(ackI)) {
-			for (let i = 0; i < ackI.length; i++) {
-				const ackIndex = ackI[i];
-				if (!data[ackIndex]) break;
+		const args: any[] = data ?? [];
+		if (this.logs) console.log("[ws] Received event:", evt, args);
 
-				const ackId = data[ackIndex];
-				data[ackIndex] = (...res: any) => {
-					this.ws.send(
-						stringify(this.dataFormatType, {
-							ack: ackId,
-							data: res,
-						}),
-					);
-				};
-			}
+		const ackIndexes = normalizeAckIndexes(ackI, args.length);
+		for (let i = 0; i < ackIndexes.length; i++) {
+			const ackIndex = ackIndexes[i];
+			const ackId = args[ackIndex];
+			if (typeof ackId !== "number") continue;
+
+			args[ackIndex] = (...res: any[]) => {
+				this.ws.send(
+					stringify(this.dataFormatType, {
+						ack: ackId,
+						data: res,
+					}),
+				);
+			};
 		}
 
-		this.handlers.emit(evt, ...data);
+		this.handlers.emit(evt, ...args);
 	}
 
 	/**

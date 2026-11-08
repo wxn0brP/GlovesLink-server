@@ -6,6 +6,8 @@ export interface Server_Opts {
 	logs: boolean;
 	statusTimeout: number;
 	maxBufferedAmount: number;
+	maxPayload: number;
+	maxStatusEntries: number;
 }
 
 export interface Server_DataEvent {

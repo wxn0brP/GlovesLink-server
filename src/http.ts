@@ -4,6 +4,7 @@ import { GlovesLinkServer } from ".";
 import { SocketStatus } from "./types";
 import { SSESocket } from "./sse";
 import { getRoom } from "./room";
+import { isValidEventName } from "./transport";
 
 /**
  * Saves the status of a socket connection for temporary tracking
@@ -17,13 +18,17 @@ export function saveSocketStatus(
 	if (!socketSelfId) return;
 
 	const id = namespace + "-" + socketSelfId;
-	wss.initStatusTemp[id] = {
+	wss.initStatusTemp.set(id, {
 		status,
 		msg,
-	};
-	setTimeout(() => {
-		delete wss.initStatusTemp[id];
-	}, wss.opts.statusTimeout);
+		expiresAt: Date.now() + wss.opts.statusTimeout,
+	});
+
+	while (wss.initStatusTemp.size > wss.opts.maxStatusEntries) {
+		const oldest = wss.initStatusTemp.keys().next();
+		if (oldest.done) break;
+		wss.initStatusTemp.delete(oldest.value);
+	}
 }
 
 /**
@@ -53,19 +58,24 @@ export function statusRouter(wss: GlovesLinkServer) {
 		}
 
 		const statusKey = path + "-" + id;
-		const status = wss.initStatusTemp[statusKey];
-		if (status === undefined) {
+		const entry = wss.initStatusTemp.get(statusKey);
+		if (!entry || entry.expiresAt <= Date.now()) {
+			wss.initStatusTemp.delete(statusKey);
 			res.status(404).json({
 				err: true,
 				msg: "Socket not found",
 			});
 			return;
 		}
+
+		wss.initStatusTemp.delete(statusKey);
 		res.json({
 			err: false,
-			status,
+			status: {
+				status: entry.status,
+				msg: entry.msg,
+			},
 		});
-		delete wss.initStatusTemp[statusKey];
 	});
 
 	return router;
@@ -108,6 +118,8 @@ export function sseRouter(wss: GlovesLinkServer) {
 					sseManager.disconnect(req.sseId!);
 					return;
 				}
+
+				wss._warnIfNoAuth(namespace);
 
 				const token = req.query.token as string;
 				const data = req.query.data ? JSON.parse(req.query.data as string) : {};
@@ -195,21 +207,23 @@ export function sseRouter(wss: GlovesLinkServer) {
 			}
 
 			const { evt, data } = req.body;
-			if (!evt) {
+			if (!isValidEventName(evt)) {
 				res.status(400).json({
 					err: true,
-					msg: "No event provided",
+					msg: "Invalid event provided",
 				});
 				return;
 			}
 
 			sseSocket.handlers.emit(
 				evt,
-				...(Array.isArray(data)
-					? data
-					: [
-							data,
-						]),
+				...(data === undefined
+					? []
+					: Array.isArray(data)
+						? data
+						: [
+								data,
+							]),
 			);
 			res.json({
 				err: false,

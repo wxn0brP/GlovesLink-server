@@ -12,6 +12,7 @@ export class Namespace {
 	public _authFn: AuthFn = async () => ({
 		status: 200,
 	});
+	public _authSet = false;
 	public _room = new Room();
 	public rooms: Rooms = new Map();
 	public users: Rooms = new Map();
@@ -43,6 +44,7 @@ export class Namespace {
 	 * @returns The current Namespace instance for chaining
 	 */
 	auth(authFn: AuthFn): this {
+		this._authSet = true;
 		this._authFn = authFn;
 		return this;
 	}
